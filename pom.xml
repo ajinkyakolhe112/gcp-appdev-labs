@@ -139,7 +139,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<executions>
+                <executions>
 								<execution>
 												<id>worker</id>
 												<goals>
@@ -149,7 +149,16 @@
 																<mainClass>com.google.training.appdev.console.ConsoleApp</mainClass>
 												</configuration>
 								</execution>
-				</executions>
+                    <execution>
+                        <id>create-entities</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.google.training.appdev.setup.QuestionBuilder</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
 			</plugin>
 		</plugins>
 	</build>
