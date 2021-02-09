@@ -12,7 +12,7 @@
 // limitations under the License.
 (function () {
 
-    var module = angular.module('qiqAuth', ['ngRoute']);
+    var module = angular.module('qiqAuth', ['ngRoute', 'firebase']);
 
     module.config(['$routeProvider', config]);
 

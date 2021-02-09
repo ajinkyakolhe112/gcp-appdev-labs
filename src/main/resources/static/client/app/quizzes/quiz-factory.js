@@ -52,15 +52,14 @@
         }
 
         function sendFeedback(email, quiz, rating, feedback) {
-            return $http.post('/api/quizzes/feedback/' + quiz, {
-                email: email,
-                quiz: quiz,
-                timestamp: Date.now(),
-                rating: rating,
-                feedback: feedback
-            }).then(function (response) {
-                return response.data; 
-            });
+            // return $http.post('/api/quizzes/sendFeedback', {
+            //     email: email,
+            //     quiz: quiz,
+            //     rating: rating,
+            //     feedback: feedback
+            // }).then(function (response) {
+            //     return response.data; 
+            // });
         }
     }
 

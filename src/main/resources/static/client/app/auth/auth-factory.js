@@ -17,18 +17,20 @@
     module.factory('authFactory', authFactory);
 
 
-    authFactory.$inject = ['$q']
+    authFactory.$inject = ['$q' ,'$firebaseAuth']
 
-    function authFactory($q) {
+    function authFactory($q, $firebaseAuth) {
+        var auth = $firebaseAuth();
 
         var user = {
-            isLoggedIn: true,
-            email: 'app.dev.student@dummy.org',
+            isLoggedIn: false,
+            email: '',
             uid: -1
         };
 
 
         return {
+            auth: auth,
             register: register,
             login: login, 
             logout: logout,
@@ -37,6 +39,11 @@
         };
 
         function register(email, password) {
+            return auth.$createUserWithEmailAndPassword(email, password).then(function (firebaseUser) {
+                user.uid = firebaseUser.uid;
+                user.email = email;
+                user.isLoggedIn = true;
+            });
         }
 
         function authorize() {
@@ -44,9 +51,15 @@
         }
 
         function login(email, password) {
+            return auth.$signInWithEmailAndPassword(email, password).then(function (firebaseUser) {
+                user.uid = firebaseUser.uid;
+                user.email = email;
+                user.isLoggedIn = true;
+            });
         }
 
         function logout() {
+            return auth.$signOut();
         }
     }
 

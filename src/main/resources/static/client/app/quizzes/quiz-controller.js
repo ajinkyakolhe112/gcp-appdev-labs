@@ -28,7 +28,6 @@
         qc.sendFeedback = sendFeedback;
         qc.questions = null;
         qc.gameOver = false;
-        qc.feedbackSent = false;
         qc.rating = -1;
 
         init();
@@ -58,7 +57,7 @@
         function sendFeedback() {
             console.log({email:qc.user.email, quizName:qc.quizName, rating:qc.rating, feedback:qc.feedback});
             quizFactory.sendFeedback(qc.user.email, qc.quizName, qc.rating, qc.feedback).then(function (data) {
-                qc.feedbackSent = true;
+
             });
         }
     }

@@ -21,7 +21,12 @@
         $routeProvider.when('/quiz/:name', {
             controller: 'QuizController',
             controllerAs: 'qc',
-            templateUrl: 'app/quizzes/quiz-template.html'
+            templateUrl: 'app/quizzes/quiz-template.html',
+            resolve: {
+                "currentAuth": ["authFactory", function (authFactory) {
+                    return authFactory.auth.$requireSignIn();
+                }]
+            }
         });
     }
 
