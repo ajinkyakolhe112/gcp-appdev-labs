@@ -15,6 +15,7 @@
  */
 package com.google.training.appdev.web;
 
+import com.google.training.appdev.services.gcp.cloudstorage.ImageService;
 import com.google.training.appdev.services.gcp.domain.Question;
 import com.google.training.appdev.services.gcp.datastore.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,8 @@ public class QuestionsController {
 
     @Autowired
     private QuestionService questionService;
+    @Autowired
+    private ImageService imageService;
 
     @GetMapping("/questions/add")
     public String getForm(Model model) {
@@ -39,6 +42,9 @@ public class QuestionsController {
 
     @PostMapping("/questions/add")
     public String submitQuestion(Question question) throws IOException {
+        String imageUrl = imageService.saveImage(question.getImage());
+        question.setImageUrl(imageUrl);
+        System.out.println("Image URL is "+imageUrl);
         questionService.createQuestion(question);
         return "redirect:/";
     }

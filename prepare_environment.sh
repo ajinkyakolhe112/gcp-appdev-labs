@@ -20,7 +20,4 @@ export GCLOUD_PROJECT=$DEVSHELL_PROJECT_ID
 echo "Installing dependencies"
 mvn clean install
 
-echo "Creating Datastore entities"
-mvn exec:java@create-entities
-
 echo "Project ID: $DEVSHELL_PROJECT_ID"
