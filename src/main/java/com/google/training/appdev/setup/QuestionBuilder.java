@@ -86,6 +86,9 @@ public class QuestionBuilder {
 
         buildQuestions().forEach(question -> questionService.createQuestion(question));
 
-        
+        out.println("Questions Stored for Quiz GCP");
+        questionService.getAllQuestions("gcp").forEach(out::println);
+        out.println("Questions Stored for Quiz Places");
+        questionService.getAllQuestions("places").forEach(out::println);
     }
 }
