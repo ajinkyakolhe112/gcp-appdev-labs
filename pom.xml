@@ -176,6 +176,15 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>answer_subscriber</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.google.training.appdev.backend.AnswersSubscriberApp</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>create-entities</id>
                         <goals>
                             <goal>java</goal>

@@ -53,12 +53,13 @@ public class QuizEndpoint {
     }
 
     @PostMapping(value = "{quiz}")
-    public ResponseEntity<QuizResult> processAnswers(@PathVariable String quiz, @RequestBody List<Answer> answers) {
+    public ResponseEntity<QuizResult> processAnswers(@PathVariable String quiz, @RequestBody List<Answer> answers) throws Exception{
         List<Question> questions = questionService.getAllQuestions(quiz);
         long correctAnswers = answers.stream().filter(answer->checkCorrectAnswer(answer, questions)).count();
         QuizResult result = new QuizResult();
         result.setCorrect(correctAnswers);
         result.setTotal(questions.size());
+        publishService.publishAnswers(answers, quiz);
         return new ResponseEntity<QuizResult>(result,HttpStatus.OK);
     }
 
@@ -74,6 +75,9 @@ public class QuizEndpoint {
 
     private boolean checkCorrectAnswer(Answer answer,  List<Question> questions){
         for(Question question : questions){
+            if(answer.getId() == question.getId()){
+                answer.setCorrectAnswer(question.getCorrectAnswer());
+            }
             if (answer.getId() == question.getId() && answer.getAnswer() == question.getCorrectAnswer()){
                 return true;
             }

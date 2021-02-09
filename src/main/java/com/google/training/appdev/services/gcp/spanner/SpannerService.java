@@ -16,11 +16,15 @@
 package com.google.training.appdev.services.gcp.spanner;
 
 import com.google.cloud.spanner.*;
+import com.google.training.appdev.services.gcp.domain.Answer;
 import com.google.training.appdev.services.gcp.domain.Feedback;
+import com.google.training.appdev.services.gcp.domain.LeaderBoardEntry;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class SpannerService {
     private static final SpannerService spannerService= new SpannerService(){};
 
@@ -59,5 +63,65 @@ public class SpannerService {
         }catch(Exception e){
             e.printStackTrace();
         }
+    }
+
+    public void insertAnswer(Answer answer) {
+        SpannerOptions options = SpannerOptions.newBuilder().build();
+        Spanner spanner = options.getService();
+        try {
+            DatabaseId db = DatabaseId.of(options.getProjectId(), "quiz-instance", "quiz-database");
+            DatabaseClient dbClient = spanner.getDatabaseClient(db);
+
+            List<Mutation> mutations = new ArrayList<>();
+
+            mutations.add(
+                    Mutation.newInsertBuilder("Answers")
+                            .set("answerId")
+                            .to(answer.getEmail()+'_'+answer.getQuiz()+"_"+answer.getTimestamp())
+                            .set("id")
+                            .to(answer.getId())
+                            .set("email")
+                            .to(answer.getEmail())
+                            .set("quiz")
+                            .to(answer.getQuiz())
+                            .set("answer")
+                            .to(answer.getAnswer())
+                            .set("correct")
+                            .to(answer.getCorrectAnswer())
+                            .set("timestamp")
+                            .to(answer.getTimestamp())
+                            .build());
+
+            dbClient.write(mutations);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public List<LeaderBoardEntry> getQuizLeaders(){
+        SpannerOptions options = SpannerOptions.newBuilder().build();
+        Spanner spanner = options.getService();
+        List<LeaderBoardEntry> leaderBoardEntries = new ArrayList<>();
+        try {
+            DatabaseId db = DatabaseId.of(options.getProjectId(), "quiz-instance", "quiz-database");
+            DatabaseClient dbClient = spanner.getDatabaseClient(db);
+
+
+            String query = "SELECT quiz, email, COUNT(*) AS score FROM Answers WHERE correct = answer GROUP BY quiz, email ORDER BY quiz, score DESC";
+
+            ResultSet resultSet = dbClient
+                                    .singleUse()
+                                        .executeQuery(Statement.of(query));
+            while (resultSet.next()) {
+                LeaderBoardEntry leaderBoardEntry = new LeaderBoardEntry();
+                leaderBoardEntry.setQuiz(resultSet.getString(0));
+                leaderBoardEntry.setEmail(resultSet.getString(1));
+                leaderBoardEntry.setScore(resultSet.getLong(2));
+                leaderBoardEntries.add(leaderBoardEntry);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return leaderBoardEntries;
     }
 }
