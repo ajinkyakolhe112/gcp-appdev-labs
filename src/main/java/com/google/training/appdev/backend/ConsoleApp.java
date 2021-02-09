@@ -25,7 +25,8 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.PushConfig;
 import com.google.pubsub.v1.SubscriptionName;
 import com.google.pubsub.v1.TopicName;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import com.google.training.appdev.services.gcp.domain.Feedback;
@@ -36,152 +37,136 @@ public class ConsoleApp {
 
   public static void main(String... args) throws Exception {
 
-
+    Logger logger = LoggerFactory.getLogger(ConsoleApp.class);
     String projectId = System.getenv("GCLOUD_PROJECT");
     System.out.println("Project: " + projectId);
-
-
-    // Notice that the code to create the topic is the same as in the publisher
     TopicName topic = TopicName.create(projectId, "feedback");
 
-    // TODO: Create the languageService
+    LanguageService languageService = LanguageService.create();
+    SpannerService spannerService = SpannerService.create();
 
-    
+    SubscriptionName subscription = SubscriptionName.create(projectId, "worker-subscription");
+    System.out.println("Starting...");
+    try (SubscriptionAdminClient subscriptionAdminClient = SubscriptionAdminClient.create()) {
 
-    // END TODO
+      System.out.println("Creating subscription...");
+      subscriptionAdminClient.createSubscription(subscription, topic, PushConfig.getDefaultInstance(), 0);
+      System.out.println("Created.");
+    }
 
-    // TODO: Create the spannerService
+    MessageReceiver receiver =
+        new MessageReceiver() {
+          @Override
+          public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
+            String fb = message.getData().toStringUtf8();
+            consumer.ack();
 
-    
-
-    // END TODO
-
-    // TODO: Create the Pub/Sub subscription name
-
-    
-
-    // END TODO
-    
-    // TODO: Create the subscriptionAdminClient
-
-    
-
-      // TODO: create the Pub/Sub subscription using the subscription name and topic
-
-      
-
-      // END TODO
-      
-    
-
-    // END TODO
-
-    // The message receiver processes Pub/Sub subscription messages
-    MessageReceiver receiver = new MessageReceiver() {
-        // Override the receiveMessage(...) method
-        @Override
-        public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
-            // TODO: Extract the message data as a JSON String
-
-            
-
-            // END TODO
-
-            // TODO: Ack the message
-
-            
-
-            // END TODO
-
+            logger.info("\n\n**************\n\nId : " + message.getMessageId());
+            logger.info("\n\n**************\n\nData : " + fb);
+            consumer.ack();
             try {
-                // Object mapper deserializes the JSON String
                 ObjectMapper mapper = new ObjectMapper();
-
-                // TODO: Deserialize the JSON String representing the feedback
-
-                
-
-                // END TODO
-
-                // TODO: Use the Natural Language API to analyze sentiment
-
-                
-
-                // END TODO
-
-                // TODO: Set the feedback object sentiment score
-
-                
-
-                // END TODO
-
-                // TODO: Insert the feedback into Cloud Spanner
-
-                
-
-                // END TODO
-
+                Feedback feedback = mapper.readValue(fb, Feedback.class);
+                float sentimentScore = languageService.analyseSentiment(feedback.getFeedback());
+                feedback.setSentimentScore(sentimentScore);
+                spannerService.insertFeedback(feedback);
             } catch (Exception e) {
+                logger.error("PubSub receiver failed: "+ e.getMessage());
                 e.printStackTrace();
             }
+
+
+          }
+        };
+        Subscriber subscriber = null;
+        try {
+            subscriber = Subscriber.defaultBuilder(subscription, receiver).build();
+            subscriber.addListener(
+                new Subscriber.Listener() {
+                    @Override
+                    public void failed(Subscriber.State from, Throwable failure) {
+                    // Handle failure. This is called when the Subscriber encountered a fatal error and is shutting down.
+                    System.err.println(failure);
+                    }
+                },
+                MoreExecutors.directExecutor());
+            subscriber.startAsync().awaitRunning();
+            System.out.println("Started. Press any key to quit and remove subscription");
+
+            System.in.read();
+
+        } finally {
+            if (subscriber != null) {
+                subscriber.stopAsync().awaitTerminated();
+            }
+            try (SubscriptionAdminClient subscriptionAdminClient = SubscriptionAdminClient.create()) {
+
+                System.out.println("Deleting subscription...");
+                subscriptionAdminClient.deleteSubscription(subscription);
+                System.out.println("Deleted.");
+            }
         }
-    };
-
-    // TODO: Declare a subscriber
-
-    
-
-    // END TODO
-
-    try {
-
-        // TODO: Initialize the subscriber using its default builder
-        // with a subscription and receiver
-
-        
-
-        // END TODO
-
-        // TODO: Add a listener to the subscriber
-
-        
-        
-
-
-
-
-        // END TODO
-
-        // TODO: Start subscribing
-
-        
-        
-
-        // END TODO
-
-        System.out.println("Started. Press any key to quit and remove subscription");
-
-        System.in.read();
-
-    } finally {
-        
-        // TODO: Stop subscribing
-
-        
-
-        // END TODO
-        
-
-        // TODO: Delete the subscription
-
-        
-        
-
-
-
-        // END TODO
     }
-    }
-
 }
 
+
+// import com.fasterxml.jackson.databind.ObjectMapper;
+// import com.google.cloud.pubsub.v1.AckReplyConsumer;
+// import com.google.cloud.pubsub.v1.MessageReceiver;
+// import com.google.cloud.pubsub.v1.Subscriber;
+// import com.google.pubsub.v1.PubsubMessage;
+// import com.google.pubsub.v1.SubscriptionName;
+// import com.google.training.appdev.services.gcp.domain.Feedback;
+// import com.google.training.appdev.services.gcp.languageapi.LanguageService;
+// import com.google.training.appdev.services.gcp.spanner.SpannerService;
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
+
+// public class ConsoleApp {
+
+//     public static void main(String ...args) throws Exception{
+//         Logger logger = LoggerFactory.getLogger(ConsoleApp.class);
+//         String projectId = System.getenv("GCLOUD_PROJECT");
+
+//         String subscriptionId = "cloud-shell-subscription";
+
+//         LanguageService languageService = LanguageService.create();
+//         SpannerService spannerService = SpannerService.create();
+
+//         SubscriptionName subscriptionName = SubscriptionName.create(projectId, subscriptionId);
+//         logger.info("Subscription name:" + subscriptionName.toString());
+//         MessageReceiver receiver =
+//                 new MessageReceiver() {
+//                     @Override
+//                     public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer){
+//                         String fb = message.getData().toStringUtf8();
+//                         logger.info("\n\n**************\n\nId : " + message.getMessageId());
+//                         logger.info("\n\n**************\n\nData : " + fb);
+//                         consumer.ack();
+//                         try {
+//                             ObjectMapper mapper = new ObjectMapper();
+//                             Feedback feedback = mapper.readValue(fb, Feedback.class);
+//                             float sentimentScore = languageService.analyseSentiment(feedback.getFeedback());
+//                             feedback.setSentimentScore(sentimentScore);
+//                             spannerService.insertFeedback(feedback);
+//                         } catch (Exception e) {
+//                             logger.error("PubSub receiver failed: "+ e.getMessage());
+//                             e.printStackTrace();
+//                         }
+//                     }
+//                 };
+
+//         Subscriber subscriber = null;
+//         try {
+//             subscriber = Subscriber.defaultBuilder(subscriptionName, receiver).build();
+//             logger.info("*** Starting Async Receiver");
+//             subscriber.startAsync();
+//             logger.info("*** Waiting for Messages");
+//             System.in.read();
+//         } finally {
+//             if (subscriber != null) {
+//                 subscriber.stopAsync();
+//             }
+//         }
+//     }
+// }
