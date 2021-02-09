@@ -25,14 +25,12 @@
         var lc = this;
         lc.login = login;
         lc.logout = logout;
-        
+        lc.user = authFactory.user
         init();
 
         function init() {
-            authFactory.auth.$onAuthStateChanged(function (user) {
-             lc.isLoggedIn = !!user;
-             lc.email = user.email;
-            });
+            lc.isLoggedIn = !!lc.user;
+            lc.email = lc.user.email;
         }
 
         function login() {
@@ -47,9 +45,6 @@
 
 
         function logout() {
-            authFactory.logout(lc.email, lc.password).then(function () {
-                $location.path('/');
-            });
         }
     }
 })();

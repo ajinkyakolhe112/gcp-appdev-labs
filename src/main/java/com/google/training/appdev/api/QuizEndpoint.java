@@ -26,6 +26,7 @@ import java.util.List;
 
 import com.google.training.appdev.services.gcp.datastore.QuestionService;
 import com.google.training.appdev.services.gcp.domain.QuizResult;
+import com.google.training.appdev.services.gcp.pubsub.PublishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,13 @@ public class QuizEndpoint {
 
     @Autowired
     private QuestionService questionService;
+
+    // TODO: Declare the publishService
+
+    
+
+
+    // END TODO
 
 
     @GetMapping(value = "{quiz}")
@@ -63,8 +71,17 @@ public class QuizEndpoint {
     public ResponseEntity<ObjectNode> processFeedback(@PathVariable String quiz, @RequestBody Feedback feedback)throws Exception{
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode root = mapper.createObjectNode();
+
+
+        // TODO: Publish the feedback to Pub/Sub
+
+        
+
+        // END TODO
+
         root.put("data","Feedback received");
         return new ResponseEntity<ObjectNode>(root,HttpStatus.OK);
+
     }
 
     private boolean checkCorrectAnswer(Answer answer,  List<Question> questions){

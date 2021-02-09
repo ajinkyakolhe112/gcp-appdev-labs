@@ -70,7 +70,7 @@ limitations under the License.
     </div>
 
 
-    <div class='col-xs-12' ng-show='qc.gameOver'>
+    <div class='col-xs-12' ng-show='qc.gameOver && !qc.feedbackSent'>
         <div class='thumbnail'>
             <div class='caption'>
                 <h3>Game Over</h3>
@@ -100,4 +100,12 @@ limitations under the License.
     </div>
 
 
+    <div class='col-xs-12' ng-show='qc.gameOver && qc.feedbackSent'>
+        <div class='thumbnail'>
+            <div class='caption'>
+                <h3>Feedback Sent</h3>
+                <h4>Thank-you for your feedback. It's much appreciated!</h4>
+            </div>
+        </div>
+    </div>
 </div>
